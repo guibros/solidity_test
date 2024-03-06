@@ -28,20 +28,42 @@ var electionInstance;
     });
 
     it("allows a voter to cast a vote", function() {
+        let candidateId = 1;
         return Election.deployed().then(function(instance) {
             electionInstance = instance;
-            candidateId = 1;
             return electionInstance.vote(candidateId, { from: accounts[0] });
         }).then(function(receipt) {
+            console.log(receipt)
+            // Check that the VoteEvent was emitted
+            assert.equal(receipt.logs.length, 1, "an event was triggered");
+            assert.equal(receipt.logs[0].event, "votedEvent", "the event type is correct");
+            assert.equal(receipt.logs[0].args._candidateId.toNumber(), candidateId, "the candidate ID is correct");            
             return electionInstance.voters(accounts[0]);
         }).then(function(voted) {
             assert(voted, "the voter was marked as voted");
             return electionInstance.candidates(candidateId);
         }).then(function(candidate) {
-            var voteCount = candidate[2];
-            assert.equal(voteCount, 1, "increment the candidate's vote count");
+            var voteCount = candidate[2].toNumber(); // Ensure conversion to Number for comparison
+            assert.equal(voteCount, 1, "increments the candidate's vote count");
         });
     });
+    
+
+    // it("allows a voter to cast a vote", function() {
+    //     return Election.deployed().then(function(instance) {
+    //         electionInstance = instance;
+    //         candidateId = 1;
+    //         return electionInstance.vote(candidateId, { from: accounts[0] });
+    //     }).then(function(receipt) {
+    //         return electionInstance.voters(accounts[0]);
+    //     }).then(function(voted) {
+    //         assert(voted, "the voter was marked as voted");
+    //         return electionInstance.candidates(candidateId);
+    //     }).then(function(candidate) {
+    //         var voteCount = candidate[2];
+    //         assert.equal(voteCount, 1, "increment the candidate's vote count");
+    //     });
+    // });
 
     it("throws an exception for invalid candidates", function() {
         return Election.deployed().then(function(instance) {
